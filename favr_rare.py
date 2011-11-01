@@ -199,8 +199,6 @@ def countVariants(evidence, variantList, bam):
             pileupCol = lookupPileup(bam, info.chromosome, info.position)
             sameAsVariant = 0
             coverage = 0
-            thirty_fives = 0 # number of variants on 35 read in pair
-            fifties = 0 # number of variants on 50 read in pair
             unknown_size_reads = 0 # number of variants on a read of unknown size
             if pileupCol:
                 pos,coverage,reads = pileupCol
