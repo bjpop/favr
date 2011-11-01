@@ -1,16 +1,94 @@
-Variant filter.
----------------
+FAVR - Filtering and Annotation of Variants that are Rare
+---------------------------------------------------------
 
-How to run on bruce:
+Version: 1.0
 
-    module load python-gcc/2.6.4
-    ./filter.py S15variants.csv S16final.bam S17final.bam S19final.bam
+Authors: Tu Nguyen-Dumont (1), Fabrice Odefrey (1),
+         Melissa C Southey (1), Daniel J Park (1),
+         Bernard J Pope (2).
 
-The first argument is a CSV file containing the variant list. The remaining
-arguments are BAM files containing reads of the samples being compared. The
-BAM files must be accompanied by an index (.bai) file.
+         (1) Genetic Epidemiology Laboratory, Department of Pathology.
+         (2) Victorian Life Sciences Computation Initiative.
 
-In Excel you can save a spreadsheet as a CSV file.
+         The University of Melbourne, Australia.
+
+Web:     https://github.com/bjpop/favr
+
+License: ...
+
+Requirements: Python 2.x (where x is >= 6).
+
+General description
+-------------------
+
+Characterizing genetic diversity through the analysis of massively parallel
+sequence (MPS) data offers enormous potential in terms of our understanding of
+predisposition to complex human disease. Great challenges remain, however,
+regarding our ability to resolve those genetic variants that are genuinely
+associated with disease from the millions of ‘bystanders’ and artefactual
+signals. FAVR is designed to assist in the resolution of some of these issues
+in the context of rare germline variants by facilitating ‘platform-steered’
+artefact filtering. FAVR is a suite of tools that allow:
+
+   (i) favr_rare.py:
+
+       Flexible approaches to filtering and annotation of MPS-derived
+       variants based on comparisons between and across relatives and
+       non-relatives, respectively.
+
+  (ii) favr_refgene.py:
+
+       Annotation based on RefGene co-ordinates of genetic features.
+
+ (iii) favr_filter_35s.py:
+
+       Filtering of artefacts derived from ‘imbalanced’ paired end sequencing.
+
+favr_rare
+---------
+
+Filter (or annotate) for rare variants by comparing to samples from the
+same or different family.
+
+Command line usage:
+
+   ./favr_rare.py [-h | --help]
+                   --family=[True|False]
+                   --variants=<variant list>
+                   reads1.bam reads2.bam ...
+
+Example, filtering rare variants compared to non-family members:
+
+   ./favr_rare.py --family=False --variants=vars.csv s1.bam s2.bam s3.bam
+
+Example, annotating rare variants compared to family members:
+
+   ./favr_rare.py --family=True --variants=vars.csv other.bam
+
+Explanation of the arguments:
+
+   --family=[True|False]
+
+      Determines whether we are comparing the variants to bam file samples
+      from family members (True) or to non-family members (False).
+
+      If comparing to family members, the program will generate an
+      annotated output of the variants list which indicates whether
+      each variant was found in any of the family member bam files.
+
+      If comparing to non-family members, the program will filter out
+      ...
+
+   --variants=<variant list>
+
+      ...
+
+   reads1.bam reads2.bam ...
+
+      A list of bam files containing aligned sequence reads for
+      particular samples. Each bam file must be accompanied by
+      an index (.bai) file (but you don't mention those index
+      files on the command line).
 
 The "keep" variants will be saved in the file called "keepfile" and
 the "binned" variants will be saved in the file called "binfile".
