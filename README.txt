@@ -30,40 +30,35 @@ signals. FAVR is designed to assist in the resolution of some of these issues
 in the context of rare germline variants by facilitating ‘platform-steered’
 artefact filtering. FAVR is a suite of tools that allow:
 
-   (i) favr_rare.py:
+   (i) favr_family_annotate.py:
 
-       Flexible approaches to filtering and annotation of MPS-derived
-       variants based on comparisons between and across relatives and
-       non-relatives, respectively.
+       Annotation of variants based on their presence/absence in
+       samples from family members.
 
-  (ii) favr_refgene.py:
+  (ii) favr_nonfamily_filter.py:
+
+       Filtering of variants based on their presence/absence and
+       abundance in samples from non-family members.
+
+ (iii) favr_refgene.py:
 
        Annotation based on RefGene co-ordinates of genetic features.
 
- (iii) favr_filter_35s.py:
+  (iv) favr_filter_35s.py:
 
        Filtering of artefacts derived from ‘imbalanced’ paired end sequencing.
 
-favr_rare
----------
+favr_family_annotate
+--------------------
 
-Filter (or annotate) for rare variants by comparing to samples from the
-same or different families.
+Annotate rare variants by comparing to samples from the same family.
 
 Command line usage:
 
-   ./favr_rare.py [-h | --help]
-                   --family=[True|False]
-                   --variants=<variant list>
-                   reads1.bam reads2.bam ...
-
-Example, filtering rare variants compared to non-family members:
-
-   ./favr_rare.py --family=False --variants=vars.csv s1.bam s2.bam s3.bam
-
-Example, annotating rare variants compared to family members:
-
-   ./favr_rare.py --family=True --variants=vars.csv other.bam
+   ./favr_family_annotate.py
+      [-h | --help]
+      --variants=<variant list>
+      reads1.bam reads2.bam ...
 
 Explanation of the arguments:
 
@@ -91,23 +86,32 @@ Explanation of the arguments:
       The rest of the line after the coordinates can be any text, which
       will be preserved in the output.
 
-   --family=True
-
-      Compare the variants to bam files from family members. The output
-      is an annotated list of variants, indicating whether each
-      variant is present in any of the family members or not.
-
-   --family=False
-
-      Compare the variants to bam files from non-family members. The purpose
-      is to filter out variants which 
-
    reads1.bam reads2.bam ...
 
       A list of bam files containing aligned sequence reads for
       particular samples. Each bam file must be accompanied by
       an index (.bai) file (but you don't mention those index
       files on the command line).
+
+favr_nonfamily_filter
+---------------------
+
+Filter rare variants by comparing to samples from different families.
+
+Command line usage:
+
+   ./favr_nonfamily_filter
+      [-h | --help]
+      --variants=<variant list>
+      reads1.bam reads2.bam ...
+
+Explanation of the arguments:
+
+   --variants=<variant list>
+      same as the favr_family_annotate.py tool (described above).
+
+   reads1.bam reads2.bam ...
+      same as the favr_family_annotate.py tool (described above).
 
 The "keep" variants will be saved in the file called "keepfile" and
 the "binned" variants will be saved in the file called "binfile".
