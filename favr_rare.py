@@ -278,7 +278,7 @@ def makeSafeFilename(name):
 
 # The classify function decides if a particular variant from the
 # variant list should be kept or binned (discarded). It returns
-# a classification of the variant whicn can be used to
+# a classification of the variant which can be used to
 # determine if it should be kept or discarded and a reason
 # why.
 #
