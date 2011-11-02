@@ -16,7 +16,7 @@ Web:     https://github.com/bjpop/favr
 
 License: ...
 
-Requirements: Python 2.x (where x is >= 6).
+Requirements: Python 2.x (where x is >= 6), and the PySam library.
 
 General description
 -------------------
@@ -48,7 +48,7 @@ favr_rare
 ---------
 
 Filter (or annotate) for rare variants by comparing to samples from the
-same or different family.
+same or different families.
 
 Command line usage:
 
@@ -67,21 +67,40 @@ Example, annotating rare variants compared to family members:
 
 Explanation of the arguments:
 
-   --family=[True|False]
-
-      Determines whether we are comparing the variants to bam file samples
-      from family members (True) or to non-family members (False).
-
-      If comparing to family members, the program will generate an
-      annotated output of the variants list which indicates whether
-      each variant was found in any of the family member bam files.
-
-      If comparing to non-family members, the program will filter out
-      ...
-
    --variants=<variant list>
 
-      ...
+      List of variants, one per line. Lines that start with a
+      "Residue Based Coordinate System" are considered variants,
+      other lines are ignored. The Residue Based Coordinate System has
+      the form:
+
+          chromosome,coordinate,orientation,alleles
+
+      for example:
+
+          22,30163533,1,A/C
+
+      that is: chromosome 22, position 30163533, orientation 1 (forward),
+      reference base 'A', variant base 'C'.
+
+      This format is supported by various genomics tools including SIFT.
+
+      We assume the position is 1 based, which means that the first coordinate
+      in a chromosome is 1 (not zero).
+
+      The rest of the line after the coordinates can be any text, which
+      will be preserved in the output.
+
+   --family=True
+
+      Compare the variants to bam files from family members. The output
+      is an annotated list of variants, indicating whether each
+      variant is present in any of the family members or not.
+
+   --family=False
+
+      Compare the variants to bam files from non-family members. The purpose
+      is to filter out variants which 
 
    reads1.bam reads2.bam ...
 
@@ -127,6 +146,3 @@ change this function if you want to change the rule. An example is given
 to demonstrate how it works. It currently says:
 
    >= 5 reads of the variant must be seen in >= 20% of the samples.
-
-If you want to run it on another computer, such as your laptop, then you need
-Python >= 2.6 (but probably not >= 3.0) and the pysam library installed.
