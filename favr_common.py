@@ -1,5 +1,3 @@
-#!/bin/env python
-
 '''
 Common utilities for FAVR programs.
 
