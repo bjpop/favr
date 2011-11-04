@@ -14,23 +14,67 @@ import os
 import pysam
 import sys
 import csv
+import getopt
+from favr_common import (parsePolymorphism, lookupPileup, makeSafeFilename)
+
+# print a usage message
+def usage():
+    print("""Usage: %s
+    [-h | --help]
+    --variants=<variant list as CSV file>
+    --bam=<bam file of reads for the same sample as variants>
+    --bin=<bin filename>
+    --keep=<keep filename>
+    --log=<log filename>
+    reads.bam""" % sys.argv[0])
+
+longOptionsFlags = ["help", "variants=", "bam=", "bin=", "keep=", "log="]
+shortOptionsFlags = "h"
+
+class Options(object):
+    def __init__(self):
+        self.variants = None
+        self.bin = None
+        self.keep = None
+        self.log = None
+        self.bam = None
+    def check(self):
+        return all([self.variants, self.bam, self.bin, self.keep, self.log])
 
 def main():
-    if len(sys.argv) != 3:
-        sys.exit("Usage: %s variantfile.csv sample.bam ..." % sys.argv[0])
-    variantFilename = sys.argv[1]
-    bamFilename = sys.argv[2]
-    filterVariants(variantFilename, bamFilename)
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], shortOptionsFlags, longOptionsFlags)
+    except getopt.GetoptError, err:
+        print str(err)
+        usage()
+        sys.exit(2)
+    options = Options()
+    for o, a in opts:
+        if o == "--variants":
+            options.variants = a
+        elif o == "--bam":
+            options.bam = a
+        elif o == "--bin":
+            options.bin = a
+        elif o == "--keep":
+            options.keep = a
+        elif o == "--log":
+            options.log = a
+        elif o in ('-h', '--help'):
+            usage()
+            sys.exit(0)
+    if not options.check():
+        print('Incorrect arguments')
+        usage()
+        exit(2)
+    filterVariants(options)
 
-def filterVariants(variantFilename, bamFilename):
-    variantFile = open(variantFilename)
-    binFilename = makeSafeFilename('35s_binfile')
-    keepFilename = makeSafeFilename('35s_keepfile')
-    logFilename = makeSafeFilename('35s_logfile')
-    with pysam.Samfile(bamFilename, "rb") as bam:
-        with open(binFilename,'w') as binFile:
-            with open(keepFilename,'wb') as keepFile:
-                with open(logFilename,'wb') as logFile:
+def filterVariants(options):
+    variantFile = open(options.variants)
+    with pysam.Samfile(options.bam, "rb") as bam:
+        with open(options.bin, 'w') as binFile:
+            with open(options.keep,'wb') as keepFile:
+                with open(options.log, 'wb') as logFile:
                     for variant in csv.reader(variantFile, delimiter=',', quotechar='|'):
                         variantStr = ','.join(variant)
                         thirty_fives,fifties = count_read_sizes(variant, bam)
@@ -102,45 +146,6 @@ def parseVariantRow(row):
                               refBase = fromTo[0],
                               variantBase = fromTo[1],
                               inputRow = row)
-    return None
-
-def parsePolymorphism(s):
-    '''Parse the X/Y polymorphism notation, extracting X and Y.'''
-    fromTo = s.split('/')
-    if len(fromTo) == 2:
-        fromBase = fromTo[0]
-        toBase = fromTo[1]
-        if validBase(fromBase) and validBase(toBase):
-            return fromBase,toBase
-    return None
-
-def validBase(s):
-    '''Check that a letter is a vaid code for a base.'''
-    return s in ['G', 'A', 'T', 'C']
-
-def lookupPileup(bam, chr, col):
-    '''Retrieve the pileup for a particular chromosome:position coordinate.'''
-    # assume argument is in 1-based numbering.
-    # samtools gives back a range of pilups that cover the requested coordinates,
-    # (no idea why) so we have to search for the particular one we want
-    for pileupcolumn in bam.pileup(chr, col-1, col):
-        if pileupcolumn.pos == col-1:
-            # XXX can't return pileupcolumn here because: segfault!
-            # this appears to be a bug in either pysam or samtools (or both)
-            return (pileupcolumn.pos , pileupcolumn.n, pileupcolumn.pileups)
-    return None
-
-def makeSafeFilename(name):
-    if not os.path.exists(name):
-        return name
-    else:
-        count = 2
-        while (count < sys.maxint):
-            newName = name + str(count)
-            if not os.path.exists(newName):
-                return newName
-            count += 1
-    # a safety condition in case we can't return a safe name
     return None
 
 if __name__ == '__main__':
