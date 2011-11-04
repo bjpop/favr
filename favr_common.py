@@ -8,6 +8,12 @@ import os
 import pysam
 import sys
 
+def safeReadInt(str):
+    if str.isdigit():
+        return int(str)
+    else:
+        raise Exception, 'not an integer: ' + str
+
 # sort the variants by coordinate.
 def sortByCoord(evidence):
     return sorted(evidence.items(), cmp=compareCoord)

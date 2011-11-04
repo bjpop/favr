@@ -25,8 +25,7 @@ def usage():
     --bam=<bam file of reads for the same sample as variants>
     --bin=<bin filename>
     --keep=<keep filename>
-    --log=<log filename>
-    reads.bam""" % sys.argv[0])
+    --log=<log filename>""" % sys.argv[0])
 
 longOptionsFlags = ["help", "variants=", "bam=", "bin=", "keep=", "log="]
 shortOptionsFlags = "h"

@@ -15,7 +15,7 @@ Authors: Tu Nguyen-Dumont (1), Fabrice Odefrey (1),
 
 Web:     https://github.com/bjpop/favr
 
-License: ...
+License: BSD
 
 Requirements: Python 2.x (where x is >= 6), and the PySam library.
 
@@ -42,11 +42,11 @@ artefact filtering. FAVR is a suite of tools that allow:
        Filtering of variants based on their presence/absence and
        abundance in samples from non-family members.
 
- (iii) favr_refgene.py:
+ (iii) favr_refgene_annotate.py:
 
        Annotation based on RefGene co-ordinates of genetic features.
 
-  (iv) favr_filter_35s.py:
+  (iv) favr_35s_filter.py:
 
        Filtering of artefacts derived from ‘imbalanced’ paired end sequencing.
 
@@ -181,9 +181,87 @@ Explanation of the arguments:
       same as the favr_family_annotate.py tool (described above).
 
 --------------------------------------------------------------------------------
-favr_filter_35s
+favr_35s_filter
 --------------------------------------------------------------------------------
 
+Filter variants based on whether they appear exclusively on 35 base reads
+(from SOLID paired-end reads). Variants which appear only on 35 base reads are
+binned. Other variants are kept.
+
+Command line usage:
+
+   ./favr_35s_filter.py
+      [-h | --help]
+      --variants=<variant list as CSV file>
+      --bam=<bam file of reads for the same sample as variants>
+      --bin=<bin filename>
+      --keep=<keep filename>
+      --log=<log filename>
+
+Explanation of the arguments:
+
+   --variants=<variant list>
+      same as the favr_family_annotate.py tool (described above).
+
+   --bam=<bam file of reads for the same sample as variants>
+
+      This is the BAM file of reads for the same sample that generated the
+      list of variants.
+
+   --bin=<bin filename>
+
+      The bin file is an output of the program that contains the variants
+      which were filtered out (binned).
+
+   --keep=<keep filename>
+
+      The keep file is an output of the program that contains the variants
+      which were kept (not binned).
+
+   --log=<log filename>
+
+      The logfile records the reasons why each variant was either binned
+      or kept.
+
 --------------------------------------------------------------------------------
-favr_refgene
+favr_refgene_annotate
 --------------------------------------------------------------------------------
+
+Annotate variants based on their position relative to exon features in the
+genome reference.
+
+   ./favr_refgene_annotate.py
+      [-h | --help]
+      --variants=<variant list as CSV file>
+      --startslack=<distance from start of coding region>
+      --spliceslack=<distance from exon start/end sites>
+      --refGene=<refGene.txt file>
+      --output=<output file name>
+
+Explanation of the arguments:
+
+   --variants=<variant list>
+      same as the favr_family_annotate.py tool (described above).
+
+   --startslack=<distance from start of coding region>
+
+      Annotate variants which are within startslack base positions
+      before the start of a coding region.
+
+   --spliceslack=<distance from exon start/end sites>
+
+      Annotate variants which are within +/- base positions
+      of an exon start or end boundary.
+
+   --refGene=<refGene.txt file>
+
+      The refGene.txt coordinates file from UCSC.
+
+   --output=<output file name>
+
+      The annotated list of variants as output. The possible annotations are:
+         - Within <startslack> before coding region start
+         - Within +/- <spliceslack> of coding exon end boundary
+         - Within +/- <spliceslack> of NON-coding exon end boundary
+         - Within +/- <spliceslack> of PARTIAL-coding exon start boundary
+         - Within +/- <spliceslack> of PARTIAL-coding exon end boundary
