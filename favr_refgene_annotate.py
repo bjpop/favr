@@ -19,6 +19,7 @@ import os
 import sys
 import csv
 import getopt
+from favr_common import safeReadInt
 
 # print a usage message
 def usage():
@@ -201,49 +202,6 @@ def readRefGene(options):
 
 def isCoding(codingStart, codingEnd, coord):
     return coord >= codingStart and coord <= codingEnd
-
-def safeReadInt(str):
-    if str.isdigit():
-        return int(str)
-    else:
-        raise Exception, 'not an integer: ' + str
-
-# sort the variants by coordinate.
-def sortByCoord(evidence):
-    return sorted(evidence.items(), cmp=compareCoord)
-
-# compare two chromosome coordinates for ordering.
-def compareCoord(coord1, coord2):
-    chr1,pos1 = coord1[0].split(':')
-    chr2,pos2 = coord2[0].split(':')
-    if chr1 == chr2:
-        return cmp(int(pos1), int(pos2))
-    else:
-        return compareChrCode(chr1[3:], chr2[3:])
-
-def compareChrCode(code1, code2):
-    isNumerical1 = code1.isdigit()
-    isNumerical2 = code2.isdigit()
-    if isNumerical1:
-        if isNumerical2:
-            return cmp(int(code1), int(code2))
-        else:
-            return -1
-    else:
-        return cmp(code1, code2)
-
-def makeSafeFilename(name):
-    if not os.path.exists(name):
-        return name
-    else:
-        count = 2
-        while (count < sys.maxint):
-            newName = name + str(count)
-            if not os.path.exists(newName):
-                return newName
-            count += 1
-    # a safety condition in case we can't return a safe name
-    return None
 
 if __name__ == '__main__':
     main()
