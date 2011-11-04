@@ -1,5 +1,6 @@
+--------------------------------------------------------------------------------
 FAVR - Filtering and Annotation of Variants that are Rare
----------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Version: 1.0
 
@@ -18,8 +19,9 @@ License: ...
 
 Requirements: Python 2.x (where x is >= 6), and the PySam library.
 
+--------------------------------------------------------------------------------
 General description
--------------------
+--------------------------------------------------------------------------------
 
 Characterizing genetic diversity through the analysis of massively parallel
 sequence (MPS) data offers enormous potential in terms of our understanding of
@@ -48,8 +50,9 @@ artefact filtering. FAVR is a suite of tools that allow:
 
        Filtering of artefacts derived from ‘imbalanced’ paired end sequencing.
 
+--------------------------------------------------------------------------------
 favr_family_annotate
---------------------
+--------------------------------------------------------------------------------
 
 Annotate rare variants by comparing to samples from the same family.
 
@@ -58,6 +61,7 @@ Command line usage:
    ./favr_family_annotate.py
       [-h | --help]
       --variants=<variant list>
+      --annotations=<output CSV file with annotations added>
       reads1.bam reads2.bam ...
 
 Explanation of the arguments:
@@ -86,6 +90,14 @@ Explanation of the arguments:
       The rest of the line after the coordinates can be any text, which
       will be preserved in the output.
 
+   --annotations=<output CSV file with annotations added>
+
+      Save the annotated variants to this file. Annotations are appended to
+      each variant line. Variants which are found
+      in at least one family member sample are annotated with 'IN RELATIVE',
+      whereas variants which are not found in at least one family member
+      are annotated with 'NOT IN RELATIVE'.
+
    reads1.bam reads2.bam ...
 
       A list of bam files containing aligned sequence reads for
@@ -93,16 +105,36 @@ Explanation of the arguments:
       an index (.bai) file (but you don't mention those index
       files on the command line).
 
+--------------------------------------------------------------------------------
 favr_nonfamily_filter
----------------------
+--------------------------------------------------------------------------------
 
 Filter rare variants by comparing to samples from different families.
 
+The rule for deciding whether a variant should be kept or binned is determined
+by function favr_nonfamily_classify.classify(). The default rule is:
+
+   readCountThreshold = 1
+   samplesPercent = 30
+   bin = 0
+   for S in samples:
+      if reads_same_as_variant(S) >= readCountThreshold:
+         bin++
+   if (bin * 100 / totalSamples) >= samplesPercent:
+      BIN
+   else:
+      KEEP
+
+You can choose a different rule by modifying the classify() function.
+
 Command line usage:
 
-   ./favr_nonfamily_filter
+   ./favr_nonfamily_filter.py
       [-h | --help]
-      --variants=<variant list>
+      --variants=<variant list as CSV file>
+      --bin=<bin filename>
+      --keep=<keep filename>
+      --log=<log filename>
       reads1.bam reads2.bam ...
 
 Explanation of the arguments:
@@ -110,43 +142,48 @@ Explanation of the arguments:
    --variants=<variant list>
       same as the favr_family_annotate.py tool (described above).
 
+   --bin=<bin filename>
+
+      The bin file is an output of the program that contains the variants
+      which were filtered out (binned).
+
+      The format of the bin file is zero or more groups of lines of the form:
+
+      chr1:1897857
+         <vars/coverage: 1/9>
+         <vars/coverage: 0/4>
+
+      The group starts with the coordinate of the variant. It is followed
+      by N lines of the form: <vars/coverage: X/Y>. Each one of these
+      corresponds to one of the sample bam files,
+      in the same order they were specified on the command line. X equals
+      the number of reads in the sample whose base was the same as the
+      variant (at the same position as the variant). Y equals the total
+      number of reads in the same which covered the same position as the
+      variant. So a ratio of 1/9 means: at the same position as the
+      variant, 1 base in the sample was the same as the variant base, and
+      9 reads in the sample covered that position.
+
+   --keep=<keep filename>
+
+      The keep file is an output of the program that contains the variants
+      which were kept (not binned).
+
+      The keepfile is the same format as the input variants file, and
+      is sorted on chromosome coordinates.
+
+   --log=<log filename>
+
+      The logfile records the reasons why each variant was either binned
+      or kept, based on the output of the classify function.
+
    reads1.bam reads2.bam ...
       same as the favr_family_annotate.py tool (described above).
 
-The "keep" variants will be saved in the file called "keepfile" and
-the "binned" variants will be saved in the file called "binfile".
+--------------------------------------------------------------------------------
+favr_filter_35s
+--------------------------------------------------------------------------------
 
-If there is already a "keepfile" or a "binfile" in the current directory,
-then a number will be appended onto the end of the new filename, for
-example "keepfile2" or "binfile2" to avoid overwriting existing files.
-
-The keepfile is a CSV file containing the kept variants. It is sorted on
-chromosome coordinates.
-
-The binfile is a list of lines, where each line has the form:
-
-   chr17:29684114 7/58 7/44 8/27
-
-The first part of the line is the coordinate of the read. The rest of
-the line contains a sequence of pairs of numbers: X/Y. The first number
-indicates the number of times the variant was seen in a sample. The second
-number indicates the coverage of the sample at that point.
-
-For example "7/58" means 7 reads were the same as the variant out of a total
-of 58 reads in the sample at that point.
-
-The order of the X/Y numbers corresponds to the order of the BAM files on
-the command line. Using the sample command line above, we would have:
-   7/58 from S16final.bam
-   7/44 from S17final.bam
-   8/27 from S19final.bam
-
-The bin file is also sorted on chromosome coordinates.
-
-The rule for deciding whether a variant should be kept or binned is contained
-in the file "bin.py". There you will find a function called "bin" which
-returns True if the read is to be binned and False otherwise. You should
-change this function if you want to change the rule. An example is given
-to demonstrate how it works. It currently says:
-
-   >= 5 reads of the variant must be seen in >= 20% of the samples.
+--------------------------------------------------------------------------------
+favr_refgene
+--------------------------------------------------------------------------------

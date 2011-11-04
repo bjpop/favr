@@ -12,24 +12,26 @@ import sys
 import csv
 import yaml
 import getopt
-from favr_common import (getEvidence, makeSafeFilename, sortByCoord
+from favr_common import (getEvidence, makeSafeFilename, sortByCoord)
 
 # print a usage message
 def usage():
     print("""Usage: %s
     [-h | --help]
     --variants=<variant list as CSV file>
+    --annotations=<output CSV file with annotations added>
     reads1.bam reads2.bam ...""") % sys.argv[0]
 
-longOptionsFlags = ["help", "variants="]
+longOptionsFlags = ["help", "variants=", "annotations="]
 shortOptionsFlags = "h"
 
 # A place to store command line arguments.
 class Options(object):
     def __init__(self):
         self.variants = None
+        self.annotations = None
     def check(self):
-        return self.variants is not None
+        return all([self.variants, self.annotations])
 
 def main():
     try:
@@ -42,6 +44,8 @@ def main():
     for o, a in opts:
         if o == "--variants":
             options.variants = a
+        elif o == "--annotations":
+            options.annotations = a
         elif o in ('-h', '--help'):
             usage()
             sys.exit(0)
@@ -56,11 +60,11 @@ def main():
     # compute the presence/absence of each variant in the bam files
     evidence = getEvidence(variantList, bamFilenames)
     # annotate the variants
-    annotate(evidence)
+    annotate(options, evidence)
 
-def annotate(evidence):
+def annotate(options, evidence):
     '''Annotate variants which appear in a sample of a family member'''
-    annotateFilename = makeSafeFilename('annotated_variants')
+    annotateFilename = options.annotations
     with open(annotateFilename,'w') as annotateFile:
         inFamily = []
         notInFamily = []

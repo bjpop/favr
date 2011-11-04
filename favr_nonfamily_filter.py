@@ -40,23 +40,30 @@ import csv
 import yaml
 import getopt
 from favr_common import (getEvidence, makeSafeFilename, sortByCoord)
+from favr_nonfamily_classify import classify
 
 # print a usage message
 def usage():
     print("""Usage: %s
     [-h | --help]
     --variants=<variant list as CSV file>
+    --bin=<bin filename>
+    --keep=<keep filename>
+    --log=<log filename>
     reads1.bam reads2.bam ...""") % sys.argv[0]
 
-longOptionsFlags = ["help", "variants="]
+longOptionsFlags = ["help", "variants=", "bin=", "keep=", "log="]
 shortOptionsFlags = "h"
 
 # A place to store command line arguments.
 class Options(object):
     def __init__(self):
         self.variants = None
+        self.bin = None
+        self.keep = None
+        self.log = None
     def check(self):
-        return self.variants != None
+        return all([self.variants, self.bin, self.keep, self.log])
 
 def main():
     try:
@@ -69,6 +76,12 @@ def main():
     for o, a in opts:
         if o == "--variants":
             options.variants = a
+        elif o == "--bin":
+            options.bin = a
+        elif o == "--keep":
+            options.keep = a
+        elif o == "--log":
+            options.log = a
         elif o in ('-h', '--help'):
             usage()
             sys.exit(0)
@@ -83,13 +96,13 @@ def main():
     # compute the presence/absence of each variant in the bam files
     evidence = getEvidence(variantList, bamFilenames)
     # filter the variants
-    filter(evidence)
+    filter(options, evidence)
 
-def filter(evidence):
+def filter(options, evidence):
     '''Decide which variants to keep and which to bin.'''
-    binFilename = makeSafeFilename('rare_binfile')
-    keepFilename = makeSafeFilename('rare_keepfile')
-    logFilename = makeSafeFilename('rare_logfile')
+    binFilename =  options.bin
+    keepFilename = options.keep
+    logFilename = options.log
     with open (logFilename,'w') as logFile:
         with open(binFilename,'w') as binFile:
             with open(keepFilename,'wb') as keepFile:
@@ -107,52 +120,6 @@ def filter(evidence):
                     elif classification.action == 'keep':
                         # keep the variant
                         csvWriter.writerow(info.inputRow)
-    print('Kept reads saved into file: %s' % keepFilename)
-    print('Binned reads saved into file: %s' % binFilename)
-    print('Log record saved into file: %s' % logFilename)
 
-# The classify function decides if a particular variant from the
-# variant list should be kept or binned (discarded). It returns
-# a classification of the variant which can be used to
-# determine if it should be kept or discarded and a reason
-# why.
-#
-# The decision to bin or keep is based on how many times
-# we see the same variant in other samples.
-#
-# If you want to use a different binning criteria, then
-# rewrite the classify function. The one provided below is just
-# an example.
-
-readCountThreshold = 1 # how many reads of the variant do we need to see in a single sample?
-samplesPercent = 30    # what percentage of the total samples need to pass the above threashold?
-
-class Classify(object):
-    def __init__(self, action, reason):
-        self.action = action # 'bin' or 'keep'
-        self.reason = reason # some text explaining why
-
-def classify(variantInfo):
-    totalSamples = 0     # number of sample files
-    binableSamples = 0   # number of samples which are considered binable
-    totalSameAsVariants = 0    # total number of reads which had a base the same as the variant in the same position
-    # we ignore the depth in this particular example
-    for readCount,_depth in variantInfo:
-        totalSamples += 1
-        if readCount >= readCountThreshold:
-            binableSamples += 1
-        totalSameAsVariants += readCount
-    if totalSamples > 0:
-        if (binableSamples * 100 / totalSamples) >= samplesPercent:
-            return Classify('bin', binThresholdMessage % (binableSamples, totalSamples, samplesPercent))
-        else:
-            return Classify('keep', keepMessage % (binableSamples, totalSamples, samplesPercent))
-    else:
-        return Classify('bin', binZeroSamplesMessage)
-
-binThresholdMessage = '(binableSamples(=%d) * 100 / totalSamples(=%d)) >= samplesPercent(=%d)'
-binZeroSamplesMessage = 'there were zero samples to compare with'
-keepMessage = '(binableSamples(=%d) * 100 / totalSamples(=%d)) < samplesPercent(=%d)'
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+   main()
