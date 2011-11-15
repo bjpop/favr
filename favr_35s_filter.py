@@ -21,7 +21,7 @@ from favr_common import (parsePolymorphism, lookupPileup, makeSafeFilename)
 def usage():
     print("""Usage: %s
     [-h | --help]
-    --variants=<variant list as CSV file>
+    --variants=<variant list as TSV file>
     --bam=<bam file of reads for the same sample as variants>
     --bin=<bin filename>
     --keep=<keep filename>
@@ -90,7 +90,7 @@ def count_read_sizes(variant, bamFile):
     thirty_fives = 0 # number of variants on 35 read in pair
     fifties = 0 # number of variants on 50 read in pair
     info = parseVariantRow(variant)
-    # only process valid rows in the variant CSV file
+    # only process valid rows in the variant TSV file
     if info:
         # get the pileup information for this particular variant coordinates
         # the pileup tells us what base was called in each of the reads at
@@ -134,7 +134,7 @@ class VariantInfo(object):
         self.inputRow = inputRow
 
 def parseVariantRow(row):
-    '''Extract the interesting information about a variant from a SIFT CSV row.'''
+    '''Extract the interesting information about a variant from a SIFT TSV row.'''
     if len(row) >= 4:
         fromTo = parsePolymorphism(row[3])
         if fromTo:

@@ -5,14 +5,17 @@ RefGene annotation script.
 
 Authors: Bernie Pope, Danny Park, Tu Ng.
 
-Reads a list of variants from a CSV file for a sample and compares
+Reads a list of variants from a TSV file for a sample and compares
 them to features in the refGene.txt database from UCSC.
+
+Coordinates are always with respect to the + strand.
 
 Revision history:
 
 21 Sep 2011.    Initial version.
 24 Oct 2011.    Fixed coordinate issue.
-
+15 Nov 2011.    Fixed coordinate issue with exon start/end depending on
+                strand.
 '''
 
 import os
@@ -25,7 +28,7 @@ from favr_common import safeReadInt
 def usage():
     print("""Usage: %s
     [-h | --help]
-    --variants=<variant list as CSV file>
+    --variants=<variant list as TSV file>
     --startslack=<distance from start of coding region>
     --spliceslack=<distance from exon start/end sites>
     --refGene=<refGene.txt file>
@@ -82,7 +85,7 @@ def main():
 def annotate(options, refGene):
     with open(options.output, 'w') as output:
         csvWriter = csv.writer(output, delimiter='\t', quotechar='|')
-        # Read the rows of the variants CSV file into a list.
+        # Read the rows of the variants TSV file into a list.
         with open(options.variants) as variants:
             for row in csv.reader(variants, delimiter='\t', quotechar='|'):
                 if len(row) >= 1:
@@ -121,34 +124,54 @@ class CodingRegionStart(object):
     def __str__(self):
         return "CodingRegionStart %d %d" % (self.upperBound, self.lowerBound)
 
-# all kinds of exon boundaries are sub-types of ExonBoundary
-# they differ in annotation and in the way they are printed
+# All kinds of exon boundaries are sub-types of ExonBoundary
+# they differ in annotation and in the way they are printed.
+# This is a bit complicated because all coordinates in refgene are
+# given relative to the + strand (regardless of which strand the
+# gene appears on). So, on the - strand the start coordinate
+# is actually greater than the end coordinate.
+# We could collapse this test into two cases, but I think it is
+# easier to understand in the more elaborate form below.
 class ExonBoundary(object):
-    def __init__(self, slack, coord, type):
-        if type == 'start':
-            self.lowerBound = coord - slack
-            self.upperBound = coord + (slack - 1)
-        else: # type == 'end'
-            self.lowerBound = coord - (slack - 1)
-            self.upperBound = coord + slack
+    def __init__(self, slack, direction, coord, type):
+        if 'direction' == '+':
+            if type == 'start':
+                self.lowerBound = coord - slack
+                self.upperBound = coord + (slack - 1)
+            elif type == 'end':
+                self.lowerBound = coord - (slack - 1)
+                self.upperBound = coord + slack
+            else:
+                exit('ExonBoundary: bad type, not start or end')
+        elif 'direction' == '-':
+            if type == 'start':
+                self.lowerBound = coord - (slack - 1)
+                self.upperBound = coord + slack
+            elif type == 'end':
+                self.lowerBound = coord - slack
+                self.upperBound = coord + (slack - 1)
+            else:
+                exit('ExonBoundary: bad type, not start or end')
+        else:
+            exit('ExonBoundary: bad direction, not + or -')
 
 class CodingExonBoundary(ExonBoundary):
-    def __init__(self, slack, coord, type):
-        super(CodingExonBoundary, self).__init__(slack, coord, type)
+    def __init__(self, slack, direction, coord, type):
+        super(CodingExonBoundary, self).__init__(slack, direction, coord, type)
         self.annotation = 'Within +/- %d of coding exon %s boundary' % (slack, type)
     def __str__(self):
         return "CodingExonBoundary %d %d" % (self.upperBound, self.lowerBound)
 
 class NonCodingExonBoundary(ExonBoundary):
-    def __init__(self, slack, coord, type):
-        super(NonCodingExonBoundary, self).__init__(slack, coord, type)
+    def __init__(self, slack, direction, coord, type):
+        super(NonCodingExonBoundary, self).__init__(slack, direction, coord, type)
         self.annotation = 'Within +/- %d of NON-coding exon %s boundary' % (slack, type)
     def __str__(self):
         return "NonCodingExonBoundary %d %d" % (self.upperBound, self.lowerBound)
 
 class PartialCodingExonBoundary(ExonBoundary):
-    def __init__(self, slack, coord, type):
-        super(PartialCodingExonBoundary, self).__init__(slack, coord, type)
+    def __init__(self, slack, direction, coord, type):
+        super(PartialCodingExonBoundary, self).__init__(slack, direction, coord, type)
         self.annotation = 'Within +/- %d of PARTIAL-coding exon %s boundary' % (slack, type)
     def __str__(self):
         return "NonCodingExonBoundary %d %d" % (self.upperBound, self.lowerBound)
@@ -180,6 +203,9 @@ def readRefGene(options):
                    refGene[chr].append(codingStart)
                exonStarts = map(lambda x: safeReadInt(x) + 1, row[9].rstrip(',').split(',')) # add one to fix up zero-based start coordinate
                exonEnds = map(lambda x: safeReadInt(x), row[10].rstrip(',').split(','))
+               # if the gene is on the reverse strand then we swap the start and end coordinates.
+               if direction == '-':
+                  (exonStarts, exonEnds) = (exonEnds, exonStarts)
                # we classify the start and ends of exons depending on whether they fall
                # inside or outside the coding region, including the partial case where
                # one end is inside and the other end is outside.
@@ -187,17 +213,17 @@ def readRefGene(options):
                    isStartCoding = isCoding(codingRegionStart, codingRegionEnd, start)
                    isEndCoding = isCoding(codingRegionStart, codingRegionEnd, end)
                    if isStartCoding and isEndCoding:
-                       refGene[chr].append(CodingExonBoundary(options.spliceslack, start, 'start'))
-                       refGene[chr].append(CodingExonBoundary(options.spliceslack, end, 'end'))
+                       refGene[chr].append(CodingExonBoundary(options.spliceslack, direction, start, 'start'))
+                       refGene[chr].append(CodingExonBoundary(options.spliceslack, direction, end, 'end'))
                    elif not isStartCoding and not isEndCoding:
-                       refGene[chr].append(NonCodingExonBoundary(options.spliceslack, start, 'start'))
-                       refGene[chr].append(NonCodingExonBoundary(options.spliceslack, end, 'end'))
+                       refGene[chr].append(NonCodingExonBoundary(options.spliceslack, direction, start, 'start'))
+                       refGene[chr].append(NonCodingExonBoundary(options.spliceslack, directiion, end, 'end'))
                    elif isStartCoding and not isEndCoding:
-                       refGene[chr].append(CodingExonBoundary(options.spliceslack, start, 'start'))
-                       refGene[chr].append(PartialCodingExonBoundary(options.spliceslack, end, 'end'))
+                       refGene[chr].append(CodingExonBoundary(options.spliceslack, direction, start, 'start'))
+                       refGene[chr].append(PartialCodingExonBoundary(options.spliceslack, direction, end, 'end'))
                    elif not isStartCoding and isEndCoding:
-                       refGene[chr].append(PartialCodingExonBoundary(options.spliceslack, start, 'start'))
-                       refGene[chr].append(CodingExonBoundary(options.spliceslack, end, 'end'))
+                       refGene[chr].append(PartialCodingExonBoundary(options.spliceslack, direction, start, 'start'))
+                       refGene[chr].append(CodingExonBoundary(options.spliceslack, direction, end, 'end'))
     return refGene
 
 def isCoding(codingStart, codingEnd, coord):

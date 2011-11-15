@@ -18,8 +18,8 @@ from favr_common import (getEvidence, makeSafeFilename, sortByCoord)
 def usage():
     print("""Usage: %s
     [-h | --help]
-    --variants=<variant list as CSV file>
-    --annotations=<output CSV file with annotations added>
+    --variants=<variant list as TSV file>
+    --annotations=<output TSV file with annotations added>
     reads1.bam reads2.bam ...""") % sys.argv[0]
 
 longOptionsFlags = ["help", "variants=", "annotations="]
@@ -54,7 +54,7 @@ def main():
         usage()
         exit(2)
     bamFilenames = args
-    # Read the rows of the variants CSV file into a list.
+    # Read the rows of the variants TSV file into a list.
     with open(options.variants) as variants:
         variantList = list(csv.reader(variants, delimiter='\t', quotechar='|'))
     # compute the presence/absence of each variant in the bam files

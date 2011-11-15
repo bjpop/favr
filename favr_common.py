@@ -70,7 +70,7 @@ def countVariants(evidence, variantList, bam):
     '''For each variant in the list, check if it is evident in this particular sample BAM.'''
     for variant in variantList:
         info = parseVariantRow(variant)
-        # only process valid rows in the variant CSV file
+        # only process valid rows in the variant TSV file
         if info:
             # get the pileup information for this particular variant coordinates
             # the pileup tells us what base was called in each of the reads at
@@ -101,7 +101,7 @@ class VariantInfo(object):
         self.inputRow = inputRow
 
 def parseVariantRow(row):
-    '''Extract the interesting information about a variant from a SIFT CSV row.'''
+    '''Extract the interesting information about a variant from a SIFT TSV row.'''
     if len(row) >= 1:
         coordinates = row[0].split(',')
         if len(coordinates) >= 4:

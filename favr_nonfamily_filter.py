@@ -5,12 +5,12 @@ Variant filter script.
 
 Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Ng.
 
-Reads a list of variants from a CSV file for a sample and compares
+Reads a list of variants from a TSV file for a sample and compares
 them to the sequence reads in BAM files for other samples.
 
 Revision history:
 
-2 May 2011.    Initial incomplete version. Can read CSV file and BAMS and
+2 May 2011.    Initial incomplete version. Can read TSV file and BAMS and
                generate a table of which variants from the original sample
                are found in the other samples.
 
@@ -18,7 +18,7 @@ Revision history:
                to come from deletions, and don't belong in the pileup for
                a given position.
 
-31 May 2011.   Change the supported input format from a custom CSV file to
+31 May 2011.   Change the supported input format from a custom TSV file to
                a SIFT (csv) file.
 
 25 Aug 2011.   Changed the binning rule to bin 35-length only reads, in
@@ -30,6 +30,8 @@ Revision history:
 19 Sep 2011.   Added classification for family samples.
 
 20 Sep 2011.   Allowed the input to be tab separated, with coordinates comma separated.
+
+14 Nov 2011.   Added classify arguments to the command line.
 
 '''
 
@@ -46,13 +48,15 @@ from favr_nonfamily_classify import classify
 def usage():
     print("""Usage: %s
     [-h | --help]
-    --variants=<variant list as CSV file>
+    --variants=<variant list as TSV file>
     --bin=<bin filename>
     --keep=<keep filename>
     --log=<log filename>
+    --varLikeThresh=<variant read threshold>
+    --samplesPercent=<percent of total samples which pass the threshold>
     reads1.bam reads2.bam ...""") % sys.argv[0]
 
-longOptionsFlags = ["help", "variants=", "bin=", "keep=", "log="]
+longOptionsFlags = ["help", "variants=", "bin=", "keep=", "log=", "varLikeThresh=", "samplesPercent="]
 shortOptionsFlags = "h"
 
 # A place to store command line arguments.
@@ -62,8 +66,10 @@ class Options(object):
         self.bin = None
         self.keep = None
         self.log = None
+        self.varLikeThresh = None
+        self.samplesPercent = None
     def check(self):
-        return all([self.variants, self.bin, self.keep, self.log])
+        return all([self.variants, self.bin, self.keep, self.log, self.varLikeThresh, self.samplesPercent])
 
 def main():
     try:
@@ -82,6 +88,10 @@ def main():
             options.keep = a
         elif o == "--log":
             options.log = a
+        elif o == "--varLikeThresh":
+            options.varLikeThresh = a
+        elif o == "--samplesPercent":
+            options.samplesPercent = a
         elif o in ('-h', '--help'):
             usage()
             sys.exit(0)
@@ -90,7 +100,7 @@ def main():
         usage()
         exit(2)
     bamFilenames = args
-    # Read the rows of the variants CSV file into a list.
+    # Read the rows of the variants TSV file into a list.
     with open(options.variants) as variants:
         variantList = list(csv.reader(variants, delimiter='\t', quotechar='|'))
     # compute the presence/absence of each variant in the bam files
@@ -109,7 +119,7 @@ def filter(options, evidence):
                 csvWriter = csv.writer(keepFile, delimiter=',', quotechar='|')
                 # sort the variants by coordinate
                 for key,info in sortByCoord(evidence):
-                    classification = classify(info.counts)
+                    classification = classify(options, info.counts)
                     # record the classification of this variant in the logfile
                     logFile.write("%s: %s: %s\n" % (key, classification.action, classification.reason))
                     if classification.action == 'bin':

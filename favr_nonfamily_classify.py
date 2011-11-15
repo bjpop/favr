@@ -17,8 +17,8 @@ Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Ng.
 # rewrite the classify function. The one provided below is just
 # an example.
 
-readCountThreshold = 1 # how many reads of the variant do we need to see in a single sample?
-samplesPercent = 30    # what percentage of the total samples need to pass the above threashold?
+#varLikeThresh = 1   # how many reads of the variant do we need to see in a single sample?
+#samplesPercent = 30 # what percentage of the total samples need to pass the above threshold?
 
 class Classify(object):
     def __init__(self, action, reason):
@@ -30,14 +30,16 @@ class Classify(object):
 # one per sample, where
 #    readCount is the number of reads in a sample which match the variant (at the same position)
 #    depth is the number of reads in a sample covering the same position as the variant (aka coverage)
-def classify(variantInfo):
+def classify(options, variantInfo):
+    varLikeThresh = options.varLikeThresh
+    samplesPercent = options.samplesPercent
     totalSamples = 0     # number of sample files
     binableSamples = 0   # number of samples which are considered binable
     totalSameAsVariants = 0    # total number of reads which had a base the same as the variant in the same position
     # we ignore the depth in this particular example
     for readCount,_depth in variantInfo:
         totalSamples += 1
-        if readCount >= readCountThreshold:
+        if readCount >= varLikeThresh:
             binableSamples += 1
         totalSameAsVariants += readCount
     if totalSamples > 0:
