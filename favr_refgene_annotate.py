@@ -134,7 +134,7 @@ class CodingRegionStart(object):
 # easier to understand in the more elaborate form below.
 class ExonBoundary(object):
     def __init__(self, slack, direction, coord, type):
-        if 'direction' == '+':
+        if direction == '+':
             if type == 'start':
                 self.lowerBound = coord - slack
                 self.upperBound = coord + (slack - 1)
@@ -142,8 +142,8 @@ class ExonBoundary(object):
                 self.lowerBound = coord - (slack - 1)
                 self.upperBound = coord + slack
             else:
-                exit('ExonBoundary: bad type, not start or end')
-        elif 'direction' == '-':
+                exit('ExonBoundary: bad type (%s), not start or end' % type)
+        elif direction == '-':
             if type == 'start':
                 self.lowerBound = coord - (slack - 1)
                 self.upperBound = coord + slack
@@ -151,9 +151,9 @@ class ExonBoundary(object):
                 self.lowerBound = coord - slack
                 self.upperBound = coord + (slack - 1)
             else:
-                exit('ExonBoundary: bad type, not start or end')
+                exit('ExonBoundary: bad type (%s), not start or end' % type)
         else:
-            exit('ExonBoundary: bad direction, not + or -')
+            exit('ExonBoundary: bad direction (%s), not + or -' % direction)
 
 class CodingExonBoundary(ExonBoundary):
     def __init__(self, slack, direction, coord, type):
@@ -217,7 +217,7 @@ def readRefGene(options):
                        refGene[chr].append(CodingExonBoundary(options.spliceslack, direction, end, 'end'))
                    elif not isStartCoding and not isEndCoding:
                        refGene[chr].append(NonCodingExonBoundary(options.spliceslack, direction, start, 'start'))
-                       refGene[chr].append(NonCodingExonBoundary(options.spliceslack, directiion, end, 'end'))
+                       refGene[chr].append(NonCodingExonBoundary(options.spliceslack, direction, end, 'end'))
                    elif isStartCoding and not isEndCoding:
                        refGene[chr].append(CodingExonBoundary(options.spliceslack, direction, start, 'start'))
                        refGene[chr].append(PartialCodingExonBoundary(options.spliceslack, direction, end, 'end'))
