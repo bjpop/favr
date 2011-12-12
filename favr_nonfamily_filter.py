@@ -41,7 +41,7 @@ import sys
 import csv
 import yaml
 import getopt
-from favr_common import (getEvidence, makeSafeFilename, sortByCoord)
+from favr_common import (safeReadInt, getEvidence, makeSafeFilename, sortByCoord)
 from favr_nonfamily_classify import classify
 
 # print a usage message
@@ -89,9 +89,9 @@ def main():
         elif o == "--log":
             options.log = a
         elif o == "--varLikeThresh":
-            options.varLikeThresh = a
+            options.varLikeThresh = safeReadInt(a)
         elif o == "--samplesPercent":
-            options.samplesPercent = a
+            options.samplesPercent = safeReadInt(a)
         elif o in ('-h', '--help'):
             usage()
             sys.exit(0)
@@ -116,7 +116,7 @@ def filter(options, evidence):
     with open (logFilename,'w') as logFile:
         with open(binFilename,'w') as binFile:
             with open(keepFilename,'wb') as keepFile:
-                csvWriter = csv.writer(keepFile, delimiter=',', quotechar='|')
+                csvWriter = csv.writer(keepFile, delimiter='\t', quotechar='|')
                 # sort the variants by coordinate
                 for key,info in sortByCoord(evidence):
                     classification = classify(options, info.counts)
