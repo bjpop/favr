@@ -70,12 +70,18 @@ def annotate(options, evidence):
         notInFamily = []
         # sort the variants by coordinate
         # XXX does this include the variant multiple times?
+#        for key,info in sortByCoord(evidence):
+#            for readCount,depth in info.counts:
+#                if readCount > 0:
+#                    inFamily.append(info.inputRow)
+#                else:
+#                    notInFamily.append(info.inputRow)
         for key,info in sortByCoord(evidence):
-            for readCount,depth in info.counts:
-                if readCount > 0:
-                    inFamily.append(info.inputRow)
-                else:
-                    notInFamily.append(info.inputRow)
+           countSum = sum([readCount for (readCount,depth) in info.counts])
+           if countSum > 0:
+              inFamily.append(info.inputRow)
+           else:
+              notInFamily.append(info.inputRow)
         csvWriter = csv.writer(annotateFile, delimiter='\t', quotechar='|')
         for row in inFamily:
              csvWriter.writerow(row + ['IN RELATIVE'])
