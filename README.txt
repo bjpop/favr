@@ -19,11 +19,6 @@ License: BSD
 
 Requirements: Python 2.x (where x is >= 6), and the PySam library.
 
-Citation:
-
-We request that if you use any of the FAVR tools that you cite the paper:
-"XXX".
-
 --------------------------------------------------------------------------------
 General description
 --------------------------------------------------------------------------------
