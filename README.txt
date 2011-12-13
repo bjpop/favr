@@ -41,12 +41,12 @@ artefact filtering. FAVR is a suite of tools that allow:
   (ii) favr_nonfamily_filter.py:
 
        Filtering of variants based on their presence/absence and
-       abundance in samples from non-family members.
+       abundance in samples from non-relatives.
 
  (iii) favr_family_annotate.py:
 
        Annotation of variants based on their presence/absence in
-       samples from family members.
+       samples from relatives.
 
  (iv)  favr_refgene_annotate.py:
 
@@ -87,7 +87,28 @@ Command line usage:
 Explanation of the arguments:
 
    --variants=<variant list>
-      same as the favr_family_annotate.py tool (described above).
+
+      List of variants, one per line. Lines that start with a
+      "Residue Based Coordinate System" (COMMA SEPARATED) are considered
+      variants, other lines are ignored. The Residue Based Coordinate System has
+      the form:
+
+          chromosome,coordinate,orientation,alleles
+
+      for example:
+
+          22,30163533,1,A/C
+
+      that is: chromosome 22, position 30163533, orientation 1 (forward),
+      reference base 'A', variant base 'C'.
+
+      This format is supported by various genomics tools including SIFT.
+
+      We assume the position is 1 based, which means that the first coordinate
+      in a chromosome is 1 (not zero).
+
+      The rest of the line after the coordinates can be any text, which
+      will be preserved in the output.
 
    --bam=<bam file of reads for the same sample as variants>
 
@@ -115,8 +136,8 @@ favr_nonfamily_filter
 
 Filter rare variants by comparing to samples from different families. The
 basic idea is that, for each variant in the input, we are looking for evidence
-of the variant in samples (bam files) of other non-family members. If there is
-enough evidence of the variant in non-family members then we filter out (bin)
+of the variant in samples (bam files) of other non-relatives. If there is
+enough evidence of the variant in non-relatives then we filter out (bin)
 the variant because it is not sufficiently rare. The presence (or absence) of
 evidence for a variant is based on two parameters: varLikeThresh and
 samplesPercent.
@@ -144,7 +165,8 @@ Command line usage:
 Explanation of the arguments:
 
    --variants=<variant list>
-      same as the favr_family_annotate.py tool (described above).
+
+      same as the favr_35s_filter.py tool (described above).
 
    --bin=<bin filename>
 
@@ -194,7 +216,11 @@ Explanation of the arguments:
       (bam files) are variant-like.
 
    reads1.bam reads2.bam ...
-      same as the favr_family_annotate.py tool (described above).
+
+      A list of bam files containing aligned sequence reads for
+      relatives. Each bam file must be accompanied by
+      an index (.bai) file (but you don't mention those index
+      files on the command line).
 
 --------------------------------------------------------------------------------
 favr_family_annotate
@@ -240,16 +266,13 @@ Explanation of the arguments:
 
       Save the annotated variants to this file. Annotations are appended to
       each variant line. Variants which are found
-      in at least one family member sample are annotated with 'IN RELATIVE',
-      whereas variants which are not found in at least one family member
+      in at least one relative sample are annotated with 'IN RELATIVE',
+      whereas variants which are not found in at least one relative
       are annotated with 'NOT IN RELATIVE'.
 
    reads1.bam reads2.bam ...
 
-      A list of bam files containing aligned sequence reads for
-      relatives. Each bam file must be accompanied by
-      an index (.bai) file (but you don't mention those index
-      files on the command line).
+      same as the favr_nonfamily_filter.py tool (described above).
 
 --------------------------------------------------------------------------------
 favr_refgene_annotate
@@ -292,12 +315,12 @@ genome reference.
     I         coding region end site
     J         exon e4 end coordinate
     K         exon e5 start coordinate
-    L         transcritpion end site AND exon e5 end coordinate
+    L         transcription end site AND exon e5 end coordinate
 
-    Exons e1 and e4 are considered "partial coding" because only part of their
-    extent lies within the coding region. Exon e5 is "non coding" because none
-    of its extent lies within the coding region. Whereas exons e2 and e3 are
-    "coding" exons because their entire extent lies within the coding region.
+    Exons e1 and e4 are considered "partial coding" because they contain both
+    coding and untranslated regions. Exon e5 is "non coding" because it lies
+    in the 3' untranslated region, whereas exons e2 and e3 are "coding" exons
+    because their entire extent lies within the coding region.
 
     If the gene was on the reverse (-) strand then the start and end positions
     would swap over. That is, the 5' end would be on the right hand side of
@@ -307,16 +330,17 @@ genome reference.
 Explanation of the arguments:
 
    --variants=<variant list>
-      same as the favr_family_annotate.py tool (described above).
+
+      same as the favr_35s_filter.py tool (described above).
 
    --startslack=<distance from start of coding region>
 
-      Annotate variants which are within startslack base positions
+      Annotate variants which are within "startslack" base positions
       before the start of a coding region.
 
    --spliceslack=<distance from exon start/end sites>
 
-      Annotate variants which are within +/- base positions
+      Annotate variants which are within +/- "spliceslack" base positions
       of an exon start or end boundary.
 
    --refGene=<refGene.txt file>
