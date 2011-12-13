@@ -240,27 +240,7 @@ Explanation of the arguments:
 
    --variants=<variant list>
 
-      List of variants, one per line. Lines that start with a
-      "Residue Based Coordinate System" (COMMA SEPARATED) are considered
-      variants, other lines are ignored. The Residue Based Coordinate System has
-      the form:
-
-          chromosome,coordinate,orientation,alleles
-
-      for example:
-
-          22,30163533,1,A/C
-
-      that is: chromosome 22, position 30163533, orientation 1 (forward),
-      reference base 'A', variant base 'C'.
-
-      This format is supported by various genomics tools including SIFT.
-
-      We assume the position is 1 based, which means that the first coordinate
-      in a chromosome is 1 (not zero).
-
-      The rest of the line after the coordinates can be any text, which
-      will be preserved in the output.
+      same as the favr_35s_filter.py tool (described above).
 
    --annotations=<output TSV file with annotations added>
 
