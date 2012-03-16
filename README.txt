@@ -32,13 +32,13 @@ signals. FAVR is designed to assist in the resolution of some of these issues
 in the context of rare germline variants by facilitating "platform-steered"
 artefact filtering. FAVR is a suite of tools that allow:
 
-   (i) favr_35s_filter.py:
+   (i) favr_pe_bias_detector.py:
 
        Filtering of artefacts derived from "imbalanced" paired end sequencing,
        such that variants are filtered out if they only occur on 35 base reads
        (from SOLiD4 50-35 paired end chemistry).
 
-  (ii) favr_nonfamily_filter.py:
+  (ii) favr_rare_and_true_filter.py:
 
        Filtering of variants based on their presence/absence and
        abundance in samples from non-relatives.
@@ -67,7 +67,7 @@ When the input is a list of variants, we assume it is stored in tab separated
 format (TSV).
 
 --------------------------------------------------------------------------------
-favr_35s_filter
+favr_pe_bias_detector
 --------------------------------------------------------------------------------
 
 Filter variants based on whether they appear exclusively on 35 base reads
@@ -76,7 +76,7 @@ binned. Other variants are kept.
 
 Command line usage:
 
-   ./favr_35s_filter.py
+   ./favr_pe_bias_detector.py
       [-h | --help]
       --variants=<variant list as TSV file>
       --bam=<bam file of reads for the same sample as variants>
@@ -131,7 +131,7 @@ Explanation of the arguments:
       or kept.
 
 --------------------------------------------------------------------------------
-favr_nonfamily_filter
+favr_rare_and_true_filter
 --------------------------------------------------------------------------------
 
 Filter rare variants by comparing to samples from different families. The
@@ -152,7 +152,7 @@ variant-like.
 
 Command line usage:
 
-   ./favr_nonfamily_filter.py
+   ./favr_rare_and_true_filter.py
       [-h | --help]
       --variants=<variant list as TSV file>
       --bin=<bin filename>
@@ -166,7 +166,7 @@ Explanation of the arguments:
 
    --variants=<variant list>
 
-      same as the favr_35s_filter.py tool (described above).
+      same as the favr_pe_bias_detector.py tool (described above).
 
    --bin=<bin filename>
 
@@ -240,7 +240,7 @@ Explanation of the arguments:
 
    --variants=<variant list>
 
-      same as the favr_35s_filter.py tool (described above).
+      same as the favr_pe_bias_detector.py tool (described above).
 
    --annotations=<output TSV file with annotations added>
 
@@ -252,7 +252,7 @@ Explanation of the arguments:
 
    reads1.bam reads2.bam ...
 
-      same as the favr_nonfamily_filter.py tool (described above).
+      same as the favr_rare_and_true_filter.py tool (described above).
 
 --------------------------------------------------------------------------------
 favr_refgene_annotate
@@ -311,7 +311,7 @@ Explanation of the arguments:
 
    --variants=<variant list>
 
-      same as the favr_35s_filter.py tool (described above).
+      same as the favr_pe_bias_detector.py tool (described above).
 
    --startslack=<distance from start of coding region>
 

@@ -42,7 +42,7 @@ import csv
 import yaml
 import getopt
 from favr_common import (safeReadInt, getEvidence, makeSafeFilename, sortByCoord)
-from favr_nonfamily_classify import classify
+from favr_rare_and_true_classify import classify
 
 # print a usage message
 def usage():
