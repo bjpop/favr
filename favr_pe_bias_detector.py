@@ -3,7 +3,7 @@
 '''
 Variant filter script. Bins variants which only appear on 35 base reads in sample.
 
-Authors: Bernie Pope, Danny Park, Tu Ng.
+Authors: Bernie Pope, Danny Park, Tu Nguyen-Dumont.
 
 Revision history:
 

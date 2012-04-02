@@ -3,7 +3,7 @@
 '''
 RefGene annotation script.
 
-Authors: Bernie Pope, Danny Park, Tu Ng.
+Authors: Bernie Pope, Danny Park, Tu Nguyen-Dumont.
 
 Reads a list of variants from a TSV file for a sample and compares
 them to features in the refGene.txt database from UCSC.
@@ -95,15 +95,18 @@ def annotate(options, refGene):
                         pos = safeReadInt(coords[1])
                         searchResult = search(chrName, pos, refGene)
                         if searchResult != None:
-                            csvWriter.writerow(row + [searchResult.annotation])
+                            csvWriter.writerow(row + [searchResult])
                         else:
                             csvWriter.writerow(row)
 
+# search for the first feature in RefGene which overlaps this coordinate
+# and return its annotation (if such a feature exists).
 def search(chr, pos, refGene):
     features = refGene.get(chr, [])
     for f in features:
-        if pos >= f.lowerBound and pos <= f.upperBound:
-            return f
+        annotation = f.annotate(pos)
+        if annotation != None:
+            return annotation
     return None
 
 def showRefGene(refGene):
@@ -114,13 +117,26 @@ def showRefGene(refGene):
 
 class CodingRegionStart(object):
     def __init__(self, direction, slack, start, end):
-        self.annotation = 'Within %d before coding region start' % slack
-        if direction == '+':
-            self.lowerBound = start - slack
-            self.upperBound = start - 1 # don't include the start in the region
+        self.direction = direction
+        self.slack = slack
+        self.start = start
+        self.end = end
+        # upper bound is always greater than or equal to the lower bound
+        # in coordinate position, and coordinates are always based on the
+        # forward strand.
+        if self.direction == '+':
+            self.lowerBound = self.start - self.slack
+            self.upperBound = self.start - 1 # don't include the start in the region
+        else: # self.direction == '-'
+            self.upperBound = self.end + self.slack
+            self.lowerBound = self.end + 1 # don't include the end in the region
+
+    def annotate(self, pos):
+        if pos >= self.lowerBound and pos <= self.upperBound:
+            return 'Within %d before coding region start' % abs (self.start - pos)
         else:
-            self.upperBound = end + slack
-            self.lowerBound = end + 1 # don't include the end in the region
+            return None
+
     def __str__(self):
         return "CodingRegionStart %d %d" % (self.upperBound, self.lowerBound)
 
@@ -133,46 +149,65 @@ class CodingRegionStart(object):
 # We could collapse this test into two cases, but I think it is
 # easier to understand in the more elaborate form below.
 class ExonBoundary(object):
-    def __init__(self, slack, direction, coord, type):
+    def __init__(self, slack, direction, boundary_coord, type):
+        self.slack = slack
+        self.direction = direction
+        self.boundary_coord = boundary_coord
+        self.type = type
         if direction == '+':
             if type == 'start':
-                self.lowerBound = coord - slack
-                self.upperBound = coord + (slack - 1)
+                self.lowerBound = boundary_coord - slack
+                self.upperBound = boundary_coord + (slack - 1)
             elif type == 'end':
-                self.lowerBound = coord - (slack - 1)
-                self.upperBound = coord + slack
+                self.lowerBound = boundary_coord - (slack - 1)
+                self.upperBound = boundary_coord + slack
             else:
                 exit('ExonBoundary: bad type (%s), not start or end' % type)
         elif direction == '-':
             if type == 'start':
-                self.lowerBound = coord - (slack - 1)
-                self.upperBound = coord + slack
+                self.lowerBound = boundary_coord - (slack - 1)
+                self.upperBound = boundary_coord + slack
             elif type == 'end':
-                self.lowerBound = coord - slack
-                self.upperBound = coord + (slack - 1)
+                self.lowerBound = boundary_coord - slack
+                self.upperBound = boundary_coord + (slack - 1)
             else:
                 exit('ExonBoundary: bad type (%s), not start or end' % type)
         else:
             exit('ExonBoundary: bad direction (%s), not + or -' % direction)
 
 class CodingExonBoundary(ExonBoundary):
-    def __init__(self, slack, direction, coord, type):
-        super(CodingExonBoundary, self).__init__(slack, direction, coord, type)
-        self.annotation = 'Within +/- %d of coding exon %s boundary' % (slack, type)
+    def __init__(self, slack, direction, boundary_coord, type):
+        super(CodingExonBoundary, self).__init__(slack, direction, boundary_coord, type)
+        #self.annotation = 'Within +/- %d of coding exon %s boundary' % (slack, type)
+    def annotate(self, pos):
+        if pos >= self.lowerBound and pos <= self.upperBound:
+            return 'Within %d of coding exon %s boundary' % (pos - self.boundary_coord, self.type)
+        else:
+            return None
     def __str__(self):
         return "CodingExonBoundary %d %d" % (self.upperBound, self.lowerBound)
 
 class NonCodingExonBoundary(ExonBoundary):
-    def __init__(self, slack, direction, coord, type):
-        super(NonCodingExonBoundary, self).__init__(slack, direction, coord, type)
-        self.annotation = 'Within +/- %d of NON-coding exon %s boundary' % (slack, type)
+    def __init__(self, slack, direction, boundary_coord, type):
+        super(NonCodingExonBoundary, self).__init__(slack, direction, boundary_coord, type)
+        # self.annotation = 'Within +/- %d of NON-coding exon %s boundary' % (slack, type)
+    def annotate(self, pos):
+        if pos >= self.lowerBound and pos <= self.upperBound:
+            return 'Within %d of NON-coding exon %s boundary' % (pos - self.boundary_coord, self.type)
+        else:
+            return None
     def __str__(self):
         return "NonCodingExonBoundary %d %d" % (self.upperBound, self.lowerBound)
 
 class PartialCodingExonBoundary(ExonBoundary):
-    def __init__(self, slack, direction, coord, type):
-        super(PartialCodingExonBoundary, self).__init__(slack, direction, coord, type)
-        self.annotation = 'Within +/- %d of PARTIAL-coding exon %s boundary' % (slack, type)
+    def __init__(self, slack, direction, boundary_coord, type):
+        super(PartialCodingExonBoundary, self).__init__(slack, direction, boundary_coord, type)
+        #self.annotation = 'Within +/- %d of PARTIAL-coding exon %s boundary' % (slack, type)
+    def annotate(self, pos):
+        if pos >= self.lowerBound and pos <= self.upperBound:
+            return 'Within %d of PARTIAL-coding exon %s boundary' % (pos - self.boundary_coord, self.type)
+        else:
+            return None
     def __str__(self):
         return "NonCodingExonBoundary %d %d" % (self.upperBound, self.lowerBound)
 

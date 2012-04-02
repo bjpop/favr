@@ -3,7 +3,7 @@
 '''
 Variant annotation script.
 
-Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Ng.
+Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Nguyen-Dumont.
 '''
 
 import os

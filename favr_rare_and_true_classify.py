@@ -1,7 +1,7 @@
 '''
 Classifier for the Variant filter script.
 
-Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Ng.
+Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Nguyen-Dumont.
 '''
 
 # The classify function decides if a particular variant from the

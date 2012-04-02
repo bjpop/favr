@@ -3,7 +3,7 @@
 '''
 Variant filter script.
 
-Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Ng.
+Authors: Bernie Pope, Danny Park, Fabrice Odefrey, Tu Nguyen-Dumont.
 
 Reads a list of variants from a TSV file for a sample and compares
 them to the sequence reads in BAM files for other samples.
