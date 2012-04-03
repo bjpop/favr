@@ -17,7 +17,8 @@ Web:     https://github.com/bjpop/favr
 
 License: BSD
 
-Requirements: Python 2.x (where x is >= 6), and the PySam library.
+Requirements: Python 2.6, and the PySam library
+(http://code.google.com/p/pysam/).
 
 --------------------------------------------------------------------------------
 General description
@@ -41,7 +42,7 @@ artefact filtering. FAVR is a suite of tools that allow:
   (ii) favr_rare_and_true_filter.py:
 
        Filtering of variants based on their presence/absence and
-       abundance in samples from non-relatives.
+       abundance in samples from comparators.
 
  (iii) favr_family_annotate.py:
 
@@ -134,10 +135,10 @@ Explanation of the arguments:
 favr_rare_and_true_filter
 --------------------------------------------------------------------------------
 
-Filter rare variants by comparing to samples from different families. The
+Filter rare variants by comparing with samples from other individuals. The
 basic idea is that, for each variant in the input, we are looking for evidence
-of the variant in samples (bam files) of other non-relatives. If there is
-enough evidence of the variant in non-relatives then we filter out (bin)
+of the variant in samples (bam files) of other comparators. If there is
+enough evidence of the variant in comparators then we filter out (bin)
 the variant because it is not sufficiently rare. The presence (or absence) of
 evidence for a variant is based on two parameters: varLikeThresh and
 samplesPercent.
