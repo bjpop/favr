@@ -1,8 +1,11 @@
 #!/bin/env python
 
 # Tool to filter out 'multis' from e.g. exome variant lists
-# Daniel J. Park 6th August 2012
-# Modified by Bernie J Pope 7th August 2012
+#
+# Revision History:
+#
+# 6th August 2012, Daniel J Park, initial version
+# 7th August 2012, Bernie Pope, removed loop on varlist
 
 import csv
 from argparse import ArgumentParser
@@ -36,7 +39,7 @@ def checker(chr, coord, number, halfwindow, varlist):
     counter = 0 
     for item in varlist:
         if item[0] == chr and abs(int(item[1]) - coord) <= halfwindow:
-                counter += 1
+            counter += 1
     return counter <= number
 
 if __name__ == '__main__':
