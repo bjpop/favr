@@ -15,7 +15,7 @@ import pysam
 import sys
 import csv
 import getopt
-from favr_common import (parsePolymorphism, lookupPileup, makeSafeFilename)
+from favr_common import (lookupPileup, makeSafeFilename)
 
 # print a usage message
 def usage():
@@ -69,13 +69,13 @@ def main():
     filterVariants(options)
 
 def filterVariants(options):
-    variantFile = open(options.variants)
+    variantFile = open(options.variants,'rU')
     with pysam.Samfile(options.bam, "rb") as bam:
         with open(options.bin, 'w') as binFile:
             with open(options.keep,'wb') as keepFile:
                 with open(options.log, 'wb') as logFile:
-                    for variant in csv.reader(variantFile, delimiter=',', quotechar='|'):
-                        variantStr = ','.join(variant)
+                    for variant in csv.reader(variantFile, delimiter='\t', quotechar='|'):
+                        variantStr = '\t'.join(variant)
                         thirty_fives,fifties = count_read_sizes(variant, bam)
                         logFile.write('%s: 35s=%d, 50s=%d' % (variantStr, thirty_fives, fifties))
                         if thirty_fives > 0 and fifties == 0:
@@ -135,17 +135,20 @@ class VariantInfo(object):
 
 def parseVariantRow(row):
     '''Extract the interesting information about a variant from a SIFT TSV row.'''
-    if len(row) >= 4:
-        fromTo = parsePolymorphism(row[3])
-        if fromTo:
-           chrName = "chr" + row[0]
-           return VariantInfo(id = "%s:%s" % (chrName,row[1]),
-                              chromosome = chrName,
-                              position = int(row[1]), # XXX should really check it is all digits
-                              refBase = fromTo[0],
-                              variantBase = fromTo[1],
-                              inputRow = row)
+    if len(row) >= 1:
+        rB = row[24]
+        vB = row[25]
+        if rB and vB in ['G', 'A', 'T', 'C']:
+            chrName = row[21]
+            chrPosn = row[22]
+            return VariantInfo(id = "%s:%s" % (chrName,chrPosn), 
+                               chromosome = chrName,
+                               position = int(chrPosn),      
+                               refBase = rB,
+                               variantBase = vB,
+                               inputRow = row)
     return None
+
 
 if __name__ == '__main__':
     main()

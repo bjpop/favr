@@ -103,32 +103,18 @@ class VariantInfo(object):
 def parseVariantRow(row):
     '''Extract the interesting information about a variant from a SIFT TSV row.'''
     if len(row) >= 1:
-        coordinates = row[0].split(',')
-        if len(coordinates) >= 4:
-            fromTo = parsePolymorphism(coordinates[3])
-            if fromTo:
-               chrName = "chr" + coordinates[0]
-               return VariantInfo(id = "%s:%s" % (chrName,coordinates[1]),
-                                  chromosome = chrName,
-                                  position = int(coordinates[1]), # XXX should really check it is all digits
-                                  refBase = fromTo[0],
-                                  variantBase = fromTo[1],
-                                  inputRow = row)
+        rB = row[24]
+        vB = row[25]
+        if rB and vB in ['G', 'A', 'T', 'C']:
+            chrName = row[21]
+            chrPosn = row[22]
+            return VariantInfo(id = "%s:%s" % (chrName,chrPosn), 
+                               chromosome = chrName,
+                               position = int(chrPosn),      
+                               refBase = rB,
+                               variantBase = vB,
+                               inputRow = row)
     return None
-
-def parsePolymorphism(s):
-    '''Parse the X/Y polymorphism notation, extracting X and Y.'''
-    fromTo = s.split('/')
-    if len(fromTo) == 2:
-        fromBase = fromTo[0]
-        toBase = fromTo[1]
-        if validBase(fromBase) and validBase(toBase):
-            return fromBase,toBase
-    return None
-
-def validBase(s):
-    '''Check that a letter is a vaid code for a base.'''
-    return s in ['G', 'A', 'T', 'C']
 
 def lookupPileup(bam, chr, col):
     '''Retrieve the pileup for a particular chromosome:position coordinate.'''

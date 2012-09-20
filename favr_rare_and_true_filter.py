@@ -39,7 +39,6 @@ import os
 import pysam
 import sys
 import csv
-import yaml
 import getopt
 from favr_common import (safeReadInt, getEvidence, makeSafeFilename, sortByCoord)
 from favr_rare_and_true_classify import classify
@@ -101,7 +100,7 @@ def main():
         exit(2)
     bamFilenames = args
     # Read the rows of the variants TSV file into a list.
-    with open(options.variants) as variants:
+    with open(options.variants, 'rU') as variants:
         variantList = list(csv.reader(variants, delimiter='\t', quotechar='|'))
     # compute the presence/absence of each variant in the bam files
     evidence = getEvidence(variantList, bamFilenames)
